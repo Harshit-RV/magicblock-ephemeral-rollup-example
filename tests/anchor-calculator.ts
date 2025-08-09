@@ -31,18 +31,31 @@ describe("anchor-calculator", () => {
   it("does adding 1 lead to 1", async () => {
     const tx = await program.methods.add(1).accounts({
       dataAccount: newAccount.publicKey,
-      signer: anchor.getProvider().publicKey,
     }).rpc();
     console.log("Your transaction signature", tx);
     const account = await program.account.newAccount.fetch(newAccount.publicKey);
     assert.equal(account.data, 1);
   })
 
+  it("can we initialise again!", async () => {
+    // Add your test here.
+    const tx = await program.methods.initialize()
+      .accounts({
+        newAccount: newAccount.publicKey,
+        signer: anchor.getProvider().wallet.publicKey,
+      })
+      .signers([newAccount])
+      .rpc();
+    console.log("Your transaction signature", tx);
+    const account = await program.account.newAccount.fetch(newAccount.publicKey);
+    console.log(account.data)
+    assert.equal(account.data, 0);
+  });
+
   it("Is double!", async () => {
     const tx = await program.methods.double()
       .accounts({
         dataAccount: newAccount.publicKey,
-        signer: anchor.getProvider().wallet.publicKey,
       })
       .rpc();
     console.log("Your transaction signature", tx);
@@ -65,7 +78,6 @@ describe("anchor-calculator", () => {
     const tx = await program.methods.sub(1)
       .accounts({
         dataAccount: newAccount.publicKey,
-        signer: anchor.getProvider().wallet.publicKey,
       })
       .rpc();
     console.log("Your transaction signature", tx);

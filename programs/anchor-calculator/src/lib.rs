@@ -50,5 +50,4 @@ pub struct Initialize<'info> {
 pub struct MathOp<'info> {
     #[account(mut)]
     pub data_account: Account<'info, NewAccount>,
-    pub signer: Signer<'info>,
 }
