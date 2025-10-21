@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8pFwiR4hCm5kpWmEx9ovsuhRPoQ69sBu4uPMS3GpNWCa");
+declare_id!("5cmQHS2mVhgkyfh2sNdtdMSMadLpSj2N3Gjc6QJhn6Cn");
+
+const PDA_SEED: &[u8] = b"pda-seed";
 
 #[program]
 pub mod anchor_calculator {
@@ -8,11 +10,12 @@ pub mod anchor_calculator {
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         ctx.accounts.new_account.data = 0;
+        ctx.accounts.new_account.bump = ctx.bumps.new_account;
         Ok(())
     }
 
     pub fn increment(ctx: Context<MathOp>) -> Result<()> {
-        ctx.accounts.data_account.data = ctx.accounts.data_account.data + 1;
+        ctx.accounts.counter.data = ctx.accounts.counter.data + 1;
         Ok(())
         // }
 
@@ -58,6 +61,7 @@ pub mod anchor_calculator {
 #[derive(InitSpace)]
 pub struct NewAccount {
     data: u32,
+    bump: u8,
 }
 
 #[derive(Accounts)]
@@ -66,7 +70,7 @@ pub struct Initialize<'info> {
         init,
         payer = signer,
         space = 8 + NewAccount::INIT_SPACE,
-        seeds = [b"pda-seed"],
+        seeds = [PDA_SEED],
         bump,
     )]
     pub new_account: Account<'info, NewAccount>,
@@ -79,8 +83,8 @@ pub struct Initialize<'info> {
 pub struct MathOp<'info> {
     #[account(
         mut,
-        seeds = [b"pda-seed"],
-        bump,
+        seeds = [PDA_SEED],
+        bump = counter.bump,
     )]
-    pub data_account: Account<'info, NewAccount>,
+    pub counter: Account<'info, NewAccount>,
 }

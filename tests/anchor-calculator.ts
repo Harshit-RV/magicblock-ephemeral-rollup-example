@@ -4,10 +4,19 @@ import { AnchorCalculator } from "../target/types/anchor_calculator";
 import assert from "assert";
 
 describe("anchor-calculator", () => {
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
+  const programLocal = anchor.workspace.anchorCalculator as Program<AnchorCalculator>;
 
-  const program = anchor.workspace.anchorCalculator as Program<AnchorCalculator>;
+  const devnetProvider = new anchor.AnchorProvider(
+    new anchor.web3.Connection("https://api.devnet.solana.com"),
+    anchor.Wallet.local(),
+  );
+
+  anchor.setProvider(devnetProvider)
+
+  const program = new anchor.Program<AnchorCalculator>(
+    programLocal.idl,
+    devnetProvider
+  );
   
   const [ counterPda ] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("pda-seed")], program.programId)
 
