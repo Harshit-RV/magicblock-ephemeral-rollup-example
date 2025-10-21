@@ -56,11 +56,9 @@ const AnchorInteractor = () => {
 
   const programER = useMemo(() => {
     if (!ephemeralRollupProvider) return null;
-    // setProvider(provider);
     return new Program<AnchorCalculator>(idl as AnchorCalculator, ephemeralRollupProvider);
   }, [ephemeralRollupProvider]);
 
-  // Fetch user profile
   const fetchCounter = useCallback(async () => {
     if (!wallet || !program) return null;
     
@@ -115,7 +113,6 @@ const AnchorInteractor = () => {
     }
   }, [wallet, program]);
 
-  // Load data on component mount - only once
   useEffect(() => {
     if (wallet && program) {
       fetchCounter();
@@ -147,7 +144,6 @@ const AnchorInteractor = () => {
     )
   }
 
-  // Create arena
   const incrementOnBase = async () => {
     if (!dataAccount || !program || !wallet) return;
     
@@ -361,10 +357,8 @@ const AnchorInteractor = () => {
         </Button>
       </div>
       
-      {/* Section 1: Create Arenas */}
-      <div className="mb-12">
+      <div>
         
-        {/* Profile Section */}
         <div className="mb-6 p-4 border rounded-lg">
           <h3 className="text-lg font-medium mb-4">Your Data account on Base</h3>
           
@@ -411,13 +405,14 @@ const AnchorInteractor = () => {
               </div>
             </div>
           )}
-
-          {/* <Button onClick={() => delegateProfileAccount()}>Delegate Account</Button> */}
         </div>
       </div>
 
-      {/* Section 2: Participate in Arenas */}
-      <div className="gap-10 flex">
+      <div className="">
+        <div className="flex-col flex gap-1 mb-3">
+          <h2>Increment on Base layer</h2>
+          <p className="text-sm text-gray-600">This will fail if the account is delegated to Ephemeral Rollup</p>
+        </div>
         <Button
           onClick={() => incrementOnBase()} 
           disabled={loading}
@@ -425,13 +420,23 @@ const AnchorInteractor = () => {
         >
           Increment on Base
         </Button>
-        <Button
-          onClick={() => incrementOnER()} 
-          disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Increment on ER
-        </Button>
+      </div>
+
+      <div className="mt-10">
+        <h2 className="mb-3">Increment on Ephemeral Rollup</h2>
+        {
+          isDelegated ? (
+            <Button
+              onClick={() => incrementOnER()} 
+              disabled={loading}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Increment on ER
+            </Button>
+          ) : (
+            <div className="p-2 bg-yellow-100 rounded">Account is on base layer. Delegate to Ephemeral rollups to try this</div>
+          )
+        }
       </div>
 
       <div className="mt-10">
@@ -454,25 +459,38 @@ const AnchorInteractor = () => {
 
       <div className="mt-10">
         <h2 className="mb-3">Commit account state</h2> 
-        <Button
-          onClick={() => commitState()} 
-          disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Commit ON ER
-        </Button> 
+        {
+          isDelegated ? (
+            <Button
+              onClick={() => commitState()} 
+              disabled={loading}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Commit ON ER
+            </Button> 
+          ) : (
+            <div className="p-2 bg-yellow-100 rounded">Account is on base layer. Delegate to Ephemeral rollups to try this</div>
+          )
+        }
+        
       </div>
 
 
       <div className="mt-10">
         <h2 className="mb-3">Undelegate</h2> 
-        <Button
-          onClick={() => undelegate()} 
-          disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Undelegate
-        </Button> 
+        {
+          isDelegated ? (
+            <Button
+              onClick={() => undelegate()} 
+              disabled={loading}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Undelegate
+            </Button> 
+          ) : (
+            <div className="p-2 bg-yellow-100 rounded">Account is on base layer. Delegate to Ephemeral rollups to try this</div>
+          )
+        }
       </div>
       
     </div>
