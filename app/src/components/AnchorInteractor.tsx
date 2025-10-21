@@ -1,10 +1,10 @@
 import { AnchorProvider, Program, setProvider } from "@coral-xyz/anchor";
-// import * as anchor from "@coral-xyz/anchor";
+import * as anchor from "@coral-xyz/anchor";
 import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
 import type { AnchorCalculator } from "../anchor-program/types";
 import idl from "../anchor-program/idl.json";
 import { Button } from "@/components/ui/button";
-import { PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
 
@@ -14,6 +14,7 @@ interface DataAccount {
   bump: number;
   selfKey: PublicKey;
 }
+const MAGICBLOCK_RPC = "https://devnet.magicblock.app";
 
 const AnchorInteractor = () => {
   const { connection } = useConnection();
@@ -21,6 +22,7 @@ const AnchorInteractor = () => {
   
   // State management
   const [ dataAccount, setDataAccount ] = useState<DataAccount | null>(null);
+  const [ dataAccountOnER, setDataAccountOnER ] = useState<DataAccount | null>(null);
   const [ isDelegated, setIsDelegated ] = useState<boolean | null>(null)
 
   const [loading, setLoading] = useState(false);
@@ -33,24 +35,31 @@ const AnchorInteractor = () => {
     return new AnchorProvider(connection, wallet, { commitment: "processed" });
   }, [connection, wallet]);
 
-  // const ephemeralRollupProvider = useMemo(() => {
-  //   if (!wallet) return null;
+  const ephemeralRollupProvider = useMemo(() => {
+    if (!wallet) return null;
 
-  //   return new AnchorProvider(
-  //     new anchor.web3.Connection("https://devnet-as.magicblock.app/", {
-  //       wsEndpoint: "wss://devnet.magicblock.app/",
-  //     }),
-  //     wallet,
-  //     { commitment: "processed" }
-  //   )
+    return new AnchorProvider(
+      new anchor.web3.Connection("https://devnet-as.magicblock.app/", {
+        wsEndpoint: "wss://devnet.magicblock.app/",
+      }),
+      wallet,
+      { commitment: "processed" }
+    )
 
-  // }, [connection, wallet]);
+  }, [connection, wallet]);
 
   const program = useMemo(() => {
     if (!provider) return null;
     setProvider(provider);
     return new Program<AnchorCalculator>(idl as AnchorCalculator, provider);
   }, [provider]);
+
+
+  const programER = useMemo(() => {
+    if (!ephemeralRollupProvider) return null;
+    // setProvider(provider);
+    return new Program<AnchorCalculator>(idl as AnchorCalculator, ephemeralRollupProvider);
+  }, [ephemeralRollupProvider]);
 
   // Fetch user profile
   const fetchCounter = useCallback(async () => {
@@ -82,12 +91,40 @@ const AnchorInteractor = () => {
     }
   }, [wallet, program]);
 
+  const fetchCounterOnER = useCallback(async () => {
+    if (!wallet || !programER) return null;
+    
+    try {
+      const [ pda ] = PublicKey.findProgramAddressSync(
+        [Buffer.from("pda-seed")],
+        new PublicKey(idl.address),
+      );
+
+      const data = await programER.account.newAccount.fetch(pda);
+
+      setDataAccountOnER({
+        ...data,
+        selfKey: pda
+      } as DataAccount);
+
+    } catch (error) {
+      console.error("Account not found:", error);
+      setDataAccountOnER(null);
+      return null;
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [wallet, program]);
+
   // Load data on component mount - only once
   useEffect(() => {
     if (wallet && program) {
       fetchCounter();
     }
-  }, [wallet, program, fetchCounter]);
+    if (wallet && programER) {
+      fetchCounterOnER();
+    }
+  }, [wallet, program, fetchCounter, fetchCounterOnER]);
 
 
   // Early return if no wallet
@@ -130,6 +167,38 @@ const AnchorInteractor = () => {
       toast.success(`(Base layer) incremented`);
     } catch (error) {
       console.error("(Base layer) Error incrementing:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const incrementOnER = async () => {
+    if (!dataAccount || !program || !wallet) return;
+    
+    setLoading(true);
+    try {
+      const transaction = await program.methods.increment()
+        .transaction();
+
+      const tempKeypair = Keypair.fromSeed(wallet.publicKey.toBytes());
+      const ephemeralConnection = new Connection(MAGICBLOCK_RPC, {
+        commitment: "confirmed",
+      });
+      
+      const { blockhash } = await ephemeralConnection.getLatestBlockhash("confirmed");
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = tempKeypair.publicKey;
+      transaction.sign(tempKeypair);
+      
+      const raw = transaction.serialize();
+      const signature = await ephemeralConnection.sendRawTransaction(raw, {
+        skipPreflight: true,
+      });
+      
+      console.log(`(ER) incremented: https://solana.fm/tx/${signature}?cluster=devnet-alpha`);
+      toast.success(`(ER) incremented`);
+    } catch (error) {
+      console.error("(ER) Error incrementing:", error);
     } finally {
       setLoading(false);
     }
@@ -190,6 +259,7 @@ const AnchorInteractor = () => {
           onClick={() => {
             setIsInitializing(true);
             fetchCounter();
+            fetchCounterOnER();
           }}
           disabled={loading || isInitializing}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -203,7 +273,7 @@ const AnchorInteractor = () => {
         
         {/* Profile Section */}
         <div className="mb-6 p-4 border rounded-lg">
-          <h3 className="text-lg font-medium mb-4">Your Data account</h3>
+          <h3 className="text-lg font-medium mb-4">Your Data account on Base</h3>
           
           {dataAccount ? (
             <div>
@@ -226,18 +296,48 @@ const AnchorInteractor = () => {
             </div>
           )}
 
+          <h3 className="text-lg font-medium my-4">Your Data account on ER</h3>
+          
+          {dataAccountOnER ? (
+            <div>
+              <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto">
+                {JSON.stringify(dataAccountOnER, null, 2)}
+              </pre>
+            </div>
+          ) : (
+            <div>
+              <p className="mb-4 text-gray-600">No data account found. Create one.</p>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => createCounterAccount()} 
+                  disabled={loading}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  {loading ? "Creating..." : "Create Profile"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* <Button onClick={() => delegateProfileAccount()}>Delegate Account</Button> */}
         </div>
       </div>
 
       {/* Section 2: Participate in Arenas */}
-      <div>
+      <div className="gap-10 flex">
         <Button
           onClick={() => incrementOnBase()} 
           disabled={loading}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
-          Increment
+          Increment on Base
+        </Button>
+        <Button
+          onClick={() => incrementOnER()} 
+          disabled={loading}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Increment on ER
         </Button>
       </div>
 
