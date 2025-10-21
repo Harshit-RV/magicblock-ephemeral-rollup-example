@@ -250,6 +250,53 @@ const AnchorInteractor = () => {
     }
   };
 
+  const undelegate = async () => {
+    if (!dataAccount || !program || !wallet) return;
+    
+    setLoading(true);
+    try {
+     
+      // const magicProgram = new PublicKey("MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57");
+      const tempKeypair = Keypair.fromSeed(wallet.publicKey.toBytes());
+      // const magicContext = tempKeypair.publicKey;
+
+      const transaction = await program.methods
+        .undelegate()
+        .transaction();
+
+      const ephemeralConnection = new Connection(MAGICBLOCK_RPC, {
+        commitment: "confirmed",
+      });
+      
+      // const { blockhash } = await ephemeralConnection.getLatestBlockhash("confirmed");
+      const {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight }
+    } = await ephemeralConnection.getLatestBlockhashAndContext();
+
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = tempKeypair.publicKey;
+      transaction.sign(tempKeypair);
+
+      const signedTx = await wallet.signTransaction(transaction);
+      
+      const raw = signedTx.serialize();
+      const signature = await ephemeralConnection.sendRawTransaction(raw, {
+        skipPreflight: true,
+      });
+
+      await ephemeralConnection.confirmTransaction({ blockhash, lastValidBlockHeight, signature }, "processed");
+      
+      console.log(`(ER) Commited: https://solana.fm/tx/${signature}?cluster=devnet-alpha`);
+      toast.success(`(ER) commited`);
+    } catch (error) {
+      console.error("(ER) Error committing:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const delegateAccount = async () => {
     if (!dataAccount || !program || !wallet) return;
     
@@ -413,6 +460,18 @@ const AnchorInteractor = () => {
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           Commit ON ER
+        </Button> 
+      </div>
+
+
+      <div className="mt-10">
+        <h2 className="mb-3">Undelegate</h2> 
+        <Button
+          onClick={() => undelegate()} 
+          disabled={loading}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Undelegate
         </Button> 
       </div>
       

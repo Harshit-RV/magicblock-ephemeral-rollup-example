@@ -59,6 +59,16 @@ pub mod anchor_calculator {
         msg!("Session state committed");
         Ok(())
     }
+
+    pub fn undelegate(ctx: Context<Commit>) -> Result<()> {
+        commit_and_undelegate_accounts(
+            &ctx.accounts.signer,
+            vec![&ctx.accounts.data_account.to_account_info()],
+            &ctx.accounts.magic_context,
+            &ctx.accounts.magic_program,
+        )?;
+        Ok(())
+    }
 }
 
 #[account]
