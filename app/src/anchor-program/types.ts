@@ -14,6 +14,191 @@ export type AnchorCalculator = {
   },
   "instructions": [
     {
+      "name": "delegateDataAccount",
+      "discriminator": [
+        70,
+        56,
+        109,
+        100,
+        144,
+        222,
+        100,
+        251
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "bufferDataAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "dataAccount"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                68,
+                152,
+                71,
+                232,
+                54,
+                243,
+                242,
+                70,
+                251,
+                23,
+                180,
+                243,
+                131,
+                221,
+                157,
+                92,
+                78,
+                181,
+                169,
+                182,
+                221,
+                93,
+                171,
+                44,
+                109,
+                32,
+                253,
+                210,
+                92,
+                45,
+                126,
+                199
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegationRecordDataAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "dataAccount"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegationProgram"
+            }
+          }
+        },
+        {
+          "name": "delegationMetadataDataAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "dataAccount"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegationProgram"
+            }
+          }
+        },
+        {
+          "name": "dataAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  100,
+                  97,
+                  45,
+                  115,
+                  101,
+                  101,
+                  100
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "ownerProgram",
+          "address": "5cmQHS2mVhgkyfh2sNdtdMSMadLpSj2N3Gjc6QJhn6Cn"
+        },
+        {
+          "name": "delegationProgram",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "increment",
       "discriminator": [
         11,
@@ -95,6 +280,43 @@ export type AnchorCalculator = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "processUndelegation",
+      "discriminator": [
+        196,
+        28,
+        41,
+        206,
+        48,
+        37,
+        51,
+        167
+      ],
+      "accounts": [
+        {
+          "name": "baseAccount",
+          "writable": true
+        },
+        {
+          "name": "buffer"
+        },
+        {
+          "name": "payer",
+          "writable": true
+        },
+        {
+          "name": "systemProgram"
+        }
+      ],
+      "args": [
+        {
+          "name": "accountSeeds",
+          "type": {
+            "vec": "bytes"
+          }
+        }
+      ]
     }
   ],
   "accounts": [

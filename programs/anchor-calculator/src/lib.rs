@@ -1,9 +1,18 @@
+#![allow(unexpected_cfgs)]
+#![allow(deprecated)]
+
 use anchor_lang::prelude::*;
+
+// Ephemeral Rollups SDK imports (assumed available)
+use ephemeral_rollups_sdk::anchor::{delegate, ephemeral};
+use ephemeral_rollups_sdk::cpi::DelegateConfig;
+use ephemeral_rollups_sdk::ephem::{commit_accounts, commit_and_undelegate_accounts};
 
 declare_id!("5cmQHS2mVhgkyfh2sNdtdMSMadLpSj2N3Gjc6QJhn6Cn");
 
 const PDA_SEED: &[u8] = b"pda-seed";
 
+#[ephemeral]
 #[program]
 pub mod anchor_calculator {
     use super::*;
@@ -17,51 +26,49 @@ pub mod anchor_calculator {
     pub fn increment(ctx: Context<MathOp>) -> Result<()> {
         ctx.accounts.counter.data = ctx.accounts.counter.data + 1;
         Ok(())
-        // }
+    }
 
-        // /// Delegate the session PDA to an ER validator
-        // pub fn delegate_session(ctx: Context<DelegateSession>) -> Result<()> {
-        //     let session = &ctx.accounts.session;
+    // /// Delegate the session PDA to an ER validator
+    pub fn delegate_data_account(ctx: Context<DelegateDataAccount>) -> Result<()> {
+        ctx.accounts.delegate_data_account(
+            &ctx.accounts.signer,
+            &[PDA_SEED],
+            DelegateConfig {
+                commit_frequency_ms: 30_000,
+                validator: Some(
+                    "MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57"
+                        .parse::<Pubkey>()
+                        .unwrap(),
+                ),
+                ..Default::default()
+            },
+        )?;
 
-        //     ctx.accounts.delegate_session(
-        //         &ctx.accounts.payer,
-        //         &[SESSION_SEED, session.player.as_ref()],
-        //         DelegateConfig {
-        //             commit_frequency_ms: 30_000,
-        //             validator: Some(
-        //                 "MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57"
-        //                     .parse::<Pubkey>()
-        //                     .unwrap(),
-        //             ),
-        //             ..Default::default()
-        //         },
-        //     )?;
-
-        //     msg!("Session delegated to Ephemeral Rollup validator");
-        //     Ok(())
+        msg!("Session delegated to Ephemeral Rollup validator");
+        Ok(())
     }
 }
-
-// #[delegate]
-// #[derive(Accounts)]
-// pub struct DelegateSession<'info> {
-//     #[account(mut)]
-//     pub payer: Signer<'info>,
-
-//     #[account(
-//         mut,
-//         del,
-//         seeds = [SESSION_SEED, session.player.as_ref()],
-//         bump = session.bump
-//     )]
-//     pub session: Account<'info, GameSession>,
-// }
 
 #[account]
 #[derive(InitSpace)]
 pub struct NewAccount {
     data: u32,
     bump: u8,
+}
+
+#[delegate]
+#[derive(Accounts)]
+pub struct DelegateDataAccount<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+
+    #[account(
+        mut,
+        del,
+        seeds = [PDA_SEED],
+        bump = data_account.bump
+    )]
+    pub data_account: Account<'info, NewAccount>,
 }
 
 #[derive(Accounts)]

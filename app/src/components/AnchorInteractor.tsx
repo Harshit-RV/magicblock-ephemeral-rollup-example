@@ -125,6 +125,29 @@ const AnchorInteractor = () => {
     }
   };
 
+  const delegateAccount = async () => {
+    if (!dataAccount || !program || !wallet) return;
+    
+    setLoading(true);
+    try {
+      const transaction = await program.methods.delegateDataAccount()
+        .transaction();
+
+      transaction.feePayer = wallet.publicKey;
+      transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      const signedTx = await wallet.signTransaction(transaction);
+      const txSig = await connection.sendRawTransaction(signedTx.serialize());
+
+      console.log(`(Base layer) account delegated: https://solana.fm/tx/${txSig}?cluster=devnet-alpha`);
+      toast.success(`(Base layer) account delegated`);
+    } catch (error) {
+      console.error("(Base layer) Error delegating account:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const createCounterAccount = async () => {
     if (!program || !wallet) return;
     
@@ -205,6 +228,17 @@ const AnchorInteractor = () => {
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           Increment
+        </Button>
+      </div>
+
+      <div className="mt-10">
+        <h2 className="mb-3">Delgate account</h2>
+        <Button
+          onClick={() => delegateAccount()} 
+          disabled={loading}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Delegate
         </Button>
       </div>
       
