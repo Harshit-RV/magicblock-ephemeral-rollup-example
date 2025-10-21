@@ -8,49 +8,33 @@ describe("anchor-calculator", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const program = anchor.workspace.anchorCalculator as Program<AnchorCalculator>;
-  const newAccount = anchor.web3.Keypair.generate();
-  const newAccount2 = anchor.web3.Keypair.generate();
-  console.log(newAccount.publicKey.toBase58());
-  console.log(newAccount2.publicKey.toBase58());
+  
+  const [ counterPda ] = anchor.web3.PublicKey.findProgramAddressSync([Buffer.from("pda-seed")], program.programId)
 
   it("Is initialized!", async () => {
     // Add your test here.
-    const tx = await program.methods.initialize()
-      .accounts({
-        newAccount: newAccount.publicKey,
-        signer: anchor.getProvider().wallet.publicKey,
-      })
-      .signers([newAccount])
-      .rpc();
+    const tx = await program.methods.initialize().rpc();
     console.log("Your transaction signature", tx);
   });
 
   it("Is data 1", async () => {
-    const account = await program.account.newAccount.fetch(newAccount.publicKey);
+    const account = await program.account.newAccount.fetch(counterPda);
     console.log("(Base layer) count: ", account.data)
     assert.equal(account.data, 0);
   })
 
   it("Increment!", async () => {
-    const tx = await program.methods.increment()
-      .accounts({
-        dataAccount: newAccount.publicKey,
-      })
-      .rpc();
+    const tx = await program.methods.increment().rpc();
     console.log("Your transaction signature", tx);
-    const account = await program.account.newAccount.fetch(newAccount.publicKey);
+    const account = await program.account.newAccount.fetch(counterPda);
     console.log("(Base layer) count: ", account.data)
     assert.equal(account.data, 1);
   });
 
   it("Increment!", async () => {
-    const tx = await program.methods.increment()
-      .accounts({
-        dataAccount: newAccount.publicKey,
-      })
-      .rpc();
+    const tx = await program.methods.increment().rpc();
     console.log("Your transaction signature", tx);
-    const account = await program.account.newAccount.fetch(newAccount.publicKey);
+    const account = await program.account.newAccount.fetch(counterPda);
     console.log("(Base layer) count: ", account.data)
     assert.equal(account.data, 2);
   });
