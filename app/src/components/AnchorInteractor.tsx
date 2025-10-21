@@ -21,6 +21,7 @@ const AnchorInteractor = () => {
   
   // State management
   const [ dataAccount, setDataAccount ] = useState<DataAccount | null>(null);
+  const [ isDelegated, setIsDelegated ] = useState<boolean | null>(null)
 
   const [loading, setLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -29,16 +30,21 @@ const AnchorInteractor = () => {
   const provider = useMemo(() => {
     if (!wallet) return null;
 
-    // return new AnchorProvider(
-    //   new anchor.web3.Connection("https://devnet-as.magicblock.app/", {
-    //     wsEndpoint: "wss://devnet.magicblock.app/",
-    //   }),
-    //   wallet,
-    //   { commitment: "processed" }
-    // )
-
     return new AnchorProvider(connection, wallet, { commitment: "processed" });
   }, [connection, wallet]);
+
+  // const ephemeralRollupProvider = useMemo(() => {
+  //   if (!wallet) return null;
+
+  //   return new AnchorProvider(
+  //     new anchor.web3.Connection("https://devnet-as.magicblock.app/", {
+  //       wsEndpoint: "wss://devnet.magicblock.app/",
+  //     }),
+  //     wallet,
+  //     { commitment: "processed" }
+  //   )
+
+  // }, [connection, wallet]);
 
   const program = useMemo(() => {
     if (!provider) return null;
@@ -57,7 +63,11 @@ const AnchorInteractor = () => {
       );
 
       const data = await program.account.newAccount.fetch(pda);
+
+      const accountInfo = await program.provider.connection.getAccountInfo(pda);
+      const isAccountDelegated = accountInfo && !accountInfo.owner.equals(program.programId);
       
+      setIsDelegated(isAccountDelegated)
       setDataAccount({
         ...data,
         selfKey: pda
@@ -233,13 +243,19 @@ const AnchorInteractor = () => {
 
       <div className="mt-10">
         <h2 className="mb-3">Delgate account</h2>
-        <Button
-          onClick={() => delegateAccount()} 
-          disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Delegate
-        </Button>
+        {
+          isDelegated ? (
+            <div className="p-2 bg-green-200 rounded">Account is delegated</div>
+          ) : (
+            <Button
+              onClick={() => delegateAccount()} 
+              disabled={loading}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Delegate
+            </Button> 
+          )
+        }
       </div>
       
     </div>
