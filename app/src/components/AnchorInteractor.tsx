@@ -393,16 +393,7 @@ const AnchorInteractor = () => {
             </div>
           ) : (
             <div>
-              <p className="mb-4 text-gray-600">No data account found. Create one.</p>
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={() => createCounterAccount()} 
-                  disabled={loading}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  {loading ? "Creating..." : "Create Profile"}
-                </Button>
-              </div>
+              <p className="mb-4 text-gray-600">No data account found.</p>
             </div>
           )}
         </div>
