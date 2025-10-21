@@ -4,7 +4,7 @@
 use anchor_lang::prelude::*;
 
 // Ephemeral Rollups SDK imports (assumed available)
-use ephemeral_rollups_sdk::anchor::{delegate, ephemeral};
+use ephemeral_rollups_sdk::anchor::{commit, delegate, ephemeral};
 use ephemeral_rollups_sdk::cpi::DelegateConfig;
 use ephemeral_rollups_sdk::ephem::{commit_accounts, commit_and_undelegate_accounts};
 
@@ -47,6 +47,18 @@ pub mod anchor_calculator {
         msg!("Session delegated to Ephemeral Rollup validator");
         Ok(())
     }
+
+    pub fn commit(ctx: Context<Commit>) -> Result<()> {
+        commit_accounts(
+            &ctx.accounts.signer,
+            vec![&ctx.accounts.data_account.to_account_info()],
+            &ctx.accounts.magic_context,
+            &ctx.accounts.magic_program,
+        )?;
+
+        msg!("Session state committed");
+        Ok(())
+    }
 }
 
 #[account]
@@ -69,6 +81,29 @@ pub struct DelegateDataAccount<'info> {
         bump = data_account.bump
     )]
     pub data_account: Account<'info, NewAccount>,
+}
+
+#[commit]
+#[derive(Accounts)]
+pub struct Commit<'info> {
+    #[account(
+        mut,
+        seeds = [PDA_SEED],
+        bump = data_account.bump
+    )]
+    pub data_account: Account<'info, NewAccount>,
+
+    // /// CHECK: Magic context account required by Ephemeral Rollups SDK.
+    // /// Anchor cannot verify this account. Safety is guaranteed by the SDK.
+    // #[account(mut)]
+    // pub magic_context: AccountInfo<'info>,
+
+    // /// CHECK: Ephemeral Rollups validator program account.
+    // /// Safety is guaranteed by the SDK; used only for commit calls.
+    // pub magic_program: AccountInfo<'info>,
+    /// Payer / authority account required by the SDK helper
+    #[account(mut)]
+    pub signer: Signer<'info>,
 }
 
 #[derive(Accounts)]
