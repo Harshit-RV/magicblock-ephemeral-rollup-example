@@ -11,23 +11,8 @@ pub mod anchor_calculator {
         Ok(())
     }
 
-    pub fn double(ctx: Context<MathOp>) -> Result<()> {
-        ctx.accounts.data_account.data = ctx.accounts.data_account.data * 2;
-        Ok(())
-    }
-
-    pub fn half(ctx: Context<MathOp>) -> Result<()> {
-        ctx.accounts.data_account.data = ctx.accounts.data_account.data / 2;
-        Ok(())
-    }
-
-    pub fn add(ctx: Context<MathOp>, amount: u32) -> Result<()> {
-        ctx.accounts.data_account.data = ctx.accounts.data_account.data + amount;
-        Ok(())
-    }
-
-    pub fn sub(ctx: Context<MathOp>, amount: u32) -> Result<()> {
-        ctx.accounts.data_account.data = ctx.accounts.data_account.data - amount;
+    pub fn increment(ctx: Context<MathOp>) -> Result<()> {
+        ctx.accounts.data_account.data = ctx.accounts.data_account.data + 1;
         Ok(())
     }
 }
