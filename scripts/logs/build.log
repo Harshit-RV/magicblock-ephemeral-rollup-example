@@ -38,3 +38,13 @@
 [2025-10-22 02:07:20] NPM version: 10.9.0
 [2025-10-22 02:07:20] Yarn version: 1.22.22
 [2025-10-22 02:07:25] === build script completed ===
+[2025-11-03 16:44:27] === Starting build script ===
+[2025-11-03 16:44:27] === Version Information ===
+[2025-11-03 16:44:27] Anchor version: anchor-cli 0.31.1
+[2025-11-03 16:44:27] Rust version: rustc 1.81.0 (eeb90cda1 2024-09-04)
+[2025-11-03 16:44:27] Cargo version: cargo 1.81.0 (2dbb1af80 2024-08-20)
+[2025-11-03 16:44:27] Solana version: solana-cli 2.1.0 (src:c1080de4; feat:3176011155, client:Agave)
+[2025-11-03 16:44:27] Node version: v23.3.0
+[2025-11-03 16:44:27] NPM version: 10.9.0
+[2025-11-03 16:44:28] Yarn version: 1.22.22
+[2025-11-03 16:45:39] === build script completed ===

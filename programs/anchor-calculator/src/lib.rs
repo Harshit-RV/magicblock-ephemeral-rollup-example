@@ -103,15 +103,6 @@ pub struct Commit<'info> {
     )]
     pub data_account: Account<'info, NewAccount>,
 
-    // /// CHECK: Magic context account required by Ephemeral Rollups SDK.
-    // /// Anchor cannot verify this account. Safety is guaranteed by the SDK.
-    // #[account(mut)]
-    // pub magic_context: AccountInfo<'info>,
-
-    // /// CHECK: Ephemeral Rollups validator program account.
-    // /// Safety is guaranteed by the SDK; used only for commit calls.
-    // pub magic_program: AccountInfo<'info>,
-    /// Payer / authority account required by the SDK helper
     #[account(mut)]
     pub signer: Signer<'info>,
 }

@@ -45,7 +45,7 @@ const AnchorInteractor = () => {
       { commitment: "processed" }
     )
 
-  }, [connection, wallet]);
+  }, [wallet]);
 
   const program = useMemo(() => {
     if (!provider) return null;
@@ -105,13 +105,13 @@ const AnchorInteractor = () => {
       } as DataAccount);
 
     } catch (error) {
-      console.error("Account not found:", error);
+      console.error("Account not found (ER):", error);
       setDataAccountOnER(null);
       return null;
     } finally {
       setIsInitializing(false);
     }
-  }, [wallet, program]);
+  }, [wallet, programER]);
 
   useEffect(() => {
     if (wallet && program) {
@@ -120,7 +120,7 @@ const AnchorInteractor = () => {
     if (wallet && programER) {
       fetchCounterOnER();
     }
-  }, [wallet, program, fetchCounter, fetchCounterOnER]);
+  }, [wallet, program, programER, fetchCounter, fetchCounterOnER]);
 
 
   // Early return if no wallet
@@ -153,13 +153,23 @@ const AnchorInteractor = () => {
         .transaction();
 
       transaction.feePayer = wallet.publicKey;
-      transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      const {
+        value: { blockhash, lastValidBlockHeight }
+      } = await connection.getLatestBlockhashAndContext();
+      transaction.recentBlockhash = blockhash;
 
       const signedTx = await wallet.signTransaction(transaction);
       const txSig = await connection.sendRawTransaction(signedTx.serialize());
+      const startTimeMs = performance.now();
+      await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature: txSig }, "processed");
 
       console.log(`(Base layer) incremented: https://solana.fm/tx/${txSig}?cluster=devnet-alpha`);
-      toast.success(`(Base layer) incremented`);
+      const elapsedSec = ((performance.now() - startTimeMs) / 1000).toFixed(2);
+      toast.success(`(Base layer) incremented in ${elapsedSec}s`);
+
+      // Auto-refresh data after confirmation
+      await fetchCounter();
+      await fetchCounterOnER();
     } catch (error) {
       console.error("(Base layer) Error incrementing:", error);
     } finally {
@@ -180,7 +190,9 @@ const AnchorInteractor = () => {
         commitment: "confirmed",
       });
       
-      const { blockhash } = await ephemeralConnection.getLatestBlockhash("confirmed");
+      const {
+        value: { blockhash, lastValidBlockHeight }
+      } = await ephemeralConnection.getLatestBlockhashAndContext();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = tempKeypair.publicKey;
       transaction.sign(tempKeypair);
@@ -189,9 +201,16 @@ const AnchorInteractor = () => {
       const signature = await ephemeralConnection.sendRawTransaction(raw, {
         skipPreflight: true,
       });
+      const startTimeMs = performance.now();
+      await ephemeralConnection.confirmTransaction({ blockhash, lastValidBlockHeight, signature }, "processed");
       
       console.log(`(ER) incremented: https://solana.fm/tx/${signature}?cluster=devnet-alpha`);
-      toast.success(`(ER) incremented`);
+      const elapsedSec = ((performance.now() - startTimeMs) / 1000).toFixed(2);
+      toast.success(`(ER) incremented in ${elapsedSec}s`);
+
+      // Auto-refresh data after confirmation
+      await fetchCounterOnER();
+      await fetchCounter();
     } catch (error) {
       console.error("(ER) Error incrementing:", error);
     } finally {
@@ -219,8 +238,6 @@ const AnchorInteractor = () => {
       
       // const { blockhash } = await ephemeralConnection.getLatestBlockhash("confirmed");
       const {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context: { slot: minContextSlot },
         value: { blockhash, lastValidBlockHeight }
     } = await ephemeralConnection.getLatestBlockhashAndContext();
 
@@ -266,8 +283,6 @@ const AnchorInteractor = () => {
       
       // const { blockhash } = await ephemeralConnection.getLatestBlockhash("confirmed");
       const {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context: { slot: minContextSlot },
         value: { blockhash, lastValidBlockHeight }
     } = await ephemeralConnection.getLatestBlockhashAndContext();
 
